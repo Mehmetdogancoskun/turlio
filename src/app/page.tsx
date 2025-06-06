@@ -1,4 +1,5 @@
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
+
 
 export default async function Home() {
   // Veritabanından ilk 10 ürünü alıyoruz
