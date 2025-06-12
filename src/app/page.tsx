@@ -1,34 +1,38 @@
-import { supabase } from '../lib/supabaseClient';
+// src/app/page.tsx
+import HeroCarousel from '@/components/HeroCarousel';
+import ProductList  from '@/components/ProductList';
+import TrustIcons   from '@/components/TrustIcons';
+import CartIcon     from '@/components/CartIcon';
+import { supabase } from '@/lib/supabaseClient';
 
-
-export default async function Home() {
-  // Veritabanından ilk 10 ürünü alıyoruz
-  const { data, error } = await supabase
+export default async function HomePage() {
+  /* Ürünleri çek */
+  const { data: products } = await supabase
     .from('urunler')
-    .select('id, tur_adi, fiyat, para_birimi')
-    .order('id', { ascending: true })
-    .limit(10);
+    .select('*')
+    .order('id', { ascending: true });
 
-  // Hata yakalama (örneğin env değişkeni eksikse)
-  if (error) {
-    return (
-      <main style={{ color: 'red', padding: 20 }}>
-        Hata: {error.message}
-      </main>
-    );
-  }
-
-  // Başarılıysa ürün listesi
   return (
-    <main style={{ padding: 20, color: 'white' }}>
-      <h1 style={{ fontSize: 24, marginBottom: 16 }}>İlk 10 Ürün</h1>
-      <ul>
-        {data?.map((u) => (
-          <li key={u.id} style={{ marginBottom: 8 }}>
-            {u.tur_adi} — {u.fiyat} {u.para_birimi}
-          </li>
-        ))}
-      </ul>
-    </main>
+    <>
+      {/* Hero + sepet ikonu */}
+      <header className="relative">
+        <HeroCarousel />
+        <div className="absolute top-4 right-4 z-20">
+          <CartIcon />
+        </div>
+      </header>
+
+      {/* Güven ikonları */}
+      <TrustIcons className="max-w-7xl mx-auto -mt-12 mb-10 relative z-10" />
+
+      {/* Ana içerik */}
+      <main className="bg-gray-900 min-h-screen p-6">
+        <h1 className="text-3xl font-bold text-white mb-6 text-center">
+          Ürün Listesi
+        </h1>
+
+        <ProductList products={products || []} />
+      </main>
+    </>
   );
 }

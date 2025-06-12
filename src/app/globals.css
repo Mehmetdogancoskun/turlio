@@ -1,26 +1,46 @@
-@import "tailwindcss";
+/* 1) Tailwind katmanları */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* 2) Tema değişkenleri */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --color-primary:    #2196F3;
+  --color-secondary:  #FF6E40;
+  --color-accent:     #4CAF50;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-background: #0a0a0a;
+    --color-foreground: #ededed;
   }
 }
 
+/* 3) Tipografi & Body */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply font-body antialiased text-base bg-[var(--color-background)] text-[var(--color-foreground)];
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-heading font-bold text-gray-900 dark:text-gray-100;
+}
+
+/* 4) Buton örnekleri */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2
+         px-4 py-2 rounded-md
+         bg-primary text-white font-semibold
+         hover:bg-primary/90 transition-colors
+         focus:outline-none focus:ring-2 focus:ring-primary/50;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2
+         px-4 py-2 rounded-md
+         border-2 border-secondary text-secondary
+         hover:bg-secondary hover:text-white transition-colors
+         focus:outline-none focus:ring-2 focus:ring-secondary/50;
 }
