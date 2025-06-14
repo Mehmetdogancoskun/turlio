@@ -1,25 +1,53 @@
-/* src/app/globals.css */
+/* ─────────────────────────────────────────────
+   Turlio – Global CSS  (Tailwind v4)
+   ─────────────────────────────────────────── */
 
-/* Tailwind CSS'in temel katmanlarını projeye dahil eder. */
+/* 1) Tailwind katmanları                    */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/*
-  Buraya, projenin tamamını etkileyecek çok özel ve genel
-  bir stil eklemek isterseniz kullanabilirsiniz.
-  Şimdilik temiz kalması en iyisidir.
-*/
+/* 2) Tema renk değişkenleri                 */
+:root {
+  --color-background: #ffffff;
+  --color-foreground: #171717;
 
-/* Önceki görevde eklediğimiz Embla Carousel stilleri */
-.embla {
-  overflow: hidden;
-  position: relative;
+  /* Marka renkleri */
+  --color-primary:   #2196F3;
+  --color-secondary: #FF6E40;
+  --color-accent:    #4CAF50;
 }
-.embla__container {
-  display: flex;
+
+/* Karanlık mod (isteğe bağlı) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #0a0a0a;
+    --color-foreground: #ededed;
+  }
 }
-.embla__slide {
-  flex: 0 0 100%;
-  min-width: 0;
+
+/* 3) Gövde metni + başlık fontları          */
+body {
+  @apply font-body antialiased text-base;
+  background: var(--color-background);
+  color: var(--color-foreground);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-heading font-bold text-gray-900 dark:text-gray-100;
+}
+
+/* 4) Yardımcı buton stilleri (örnek)        */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2
+         px-4 py-2 rounded-md
+         bg-primary text-white font-semibold
+         hover:bg-primary/90 transition;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2
+         px-4 py-2 rounded-md
+         border-2 border-secondary text-secondary
+         hover:bg-secondary hover:text-white transition;
 }

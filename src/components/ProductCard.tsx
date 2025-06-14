@@ -10,23 +10,30 @@ interface Product {
   tur_adi: string;
   gorsel_url: string | null;
   sub_category: string;
-  fiyat: number;          // yetişkin birim fiyatı
+  fiyat: number;
   para_birimi: string;
   indirim?: number;
   fiyatEski?: number;
   rating?: number;
+
+  /* Sepete eklenirken eklenen alanlar (opsiyonel) */
+  unitPrice?: number;
+  lineTotal?: number;
 }
 
 export default function ProductCard({ product }: { product: Product }) {
-  /* addToCart: CartContext’ten geliyor */
   const { addToCart } = useCart();
+
+  /* Yardımcı: fiyatı TR biçiminde yaz */
+  const fmt = (n: number) =>
+    n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <div className="bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
-      {/* Görsel Alanı -------------------------------------------------- */}
+      {/* Görsel ------------------------------------------------------- */}
       <Link
         href={`/products/${product.id}`}
-        className="relative block w-full h-48 bg-gray-100 overflow-hidden"
+        className="relative block bg-gray-100 overflow-hidden aspect-[4/3]"
       >
         {product.indirim != null && product.fiyatEski != null && (
           <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
@@ -39,8 +46,9 @@ export default function ProductCard({ product }: { product: Product }) {
             src={product.gorsel_url}
             alt={product.tur_adi}
             fill
-            sizes="(max-width: 640px) 100vw, 33vw"
+            sizes="(max-width:640px) 100vw, (max-width:1024px) 33vw, 25vw"
             className="object-cover"
+            priority
           />
         ) : (
           <span className="absolute inset-0 flex items-center justify-center text-gray-500">
@@ -60,13 +68,14 @@ export default function ProductCard({ product }: { product: Product }) {
           <div>
             {product.indirim != null && product.fiyatEski != null && (
               <span className="line-through text-sm text-gray-400 mr-2">
-                {product.fiyatEski.toFixed(2)} {product.para_birimi}
+                {fmt(product.fiyatEski)} {product.para_birimi}
               </span>
             )}
             <span className="text-primary font-bold text-xl">
-              {product.fiyat.toFixed(2)} {product.para_birimi}
+              {fmt(product.fiyat)} {product.para_birimi}
             </span>
           </div>
+
           {product.rating != null && (
             <span className="text-yellow-400 text-sm">
               ⭐ {product.rating.toFixed(1)}
@@ -74,20 +83,20 @@ export default function ProductCard({ product }: { product: Product }) {
           )}
         </div>
 
-        {/* Sepet ve Detay Butonları ---------------------------------- */}
+        {/* Butonlar --------------------------------------------------- */}
         <div className="mt-auto flex gap-2">
           <button
             onClick={() =>
               addToCart({
                 ...product,
-                /* Yeni fiyat alanları */
-                unitPrice: product.fiyat,  // tek yetişkin ücreti
-                lineTotal: product.fiyat,  // karttan eklenen satırın toplamı
+                unitPrice: product.fiyat,
+                lineTotal: product.fiyat,
+                quantity: 1,
               })
             }
             className="btn-primary flex-1"
           >
-            Sepete Ekle
+            Sepete Ekle
           </button>
 
           <Link

@@ -1,28 +1,46 @@
 // src/components/ProductList.tsx
 'use client';
 
-import { useState, type ChangeEvent } from 'react';
+import { useState, ChangeEvent } from 'react';
 import ProductCard from './ProductCard';
-// DEĞİŞİKLİK: CategoryIcons importunu düzelttik. Artık default değil.
 import { CategoryIcons, type CatKey } from './CategoryIcons';
 import SearchBar from './SearchBar';
 
-// DEĞİŞİKLİK: 'export default function' yerine 'export const' kullandık.
-export const ProductList = ({ products }: { products: any[] }) => {
+/* Basit ürün tipi — veritabanı alanlarını bozmadık */
+interface Product {
+  id: number;
+  tur_adi: string;
+  gorsel_url: string | null;
+  product_type: CatKey;          // 'tur' | 'transfer' | …
+  sub_category: string;
+  fiyat: number;
+  para_birimi: string;
+  indirim?: number;
+  fiyatEski?: number;
+  rating?: number;
+}
+
+export const ProductList = ({ products }: { products: Product[] }) => {
   const [selectedCat, setSelectedCat] = useState<CatKey | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm]   = useState('');
 
-  // 1) Kategoriye göre filtrele
-  let filtered = !selectedCat || selectedCat === 'hepsi'
-    ? products
-    : products.filter(p => p.product_type === selectedCat);
+  /* 1) Kategori filtreleme --------------------------------------- */
+  let filtered =
+    !selectedCat || selectedCat === 'hepsi'
+      ? products
+      : products.filter((p) => p.product_type === selectedCat);
 
-  // 2) Arama terimine göre filtrele
-  filtered = filtered.filter(p =>
+  /* 2) Arama filtreleme ------------------------------------------- */
+  filtered = filtered.filter((p) =>
     p.tur_adi.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  console.log('🔍 selectedCat:', selectedCat, '→ filtered count:', filtered.length);
+  console.log(
+    '🔍 selectedCat:',
+    selectedCat,
+    '→ filtered count:',
+    filtered.length
+  );
 
   return (
     <>
@@ -32,15 +50,17 @@ export const ProductList = ({ products }: { products: any[] }) => {
       {/* Arama çubuğu */}
       <SearchBar
         value={searchTerm}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          setSearchTerm(e.target.value)
+        }
       />
 
       {/* Ürün kartları */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 mt-8">
-        {filtered.map(item => (
+      <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(280px,1fr))] px-4 mt-8">
+        {filtered.map((item) => (
           <ProductCard key={item.id} product={item} />
         ))}
       </div>
     </>
   );
-}
+};

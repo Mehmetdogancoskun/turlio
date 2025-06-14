@@ -6,8 +6,8 @@ import { ShoppingCart } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 export default function CartIcon() {
-  const { items } = useCart();
-  const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
+  const { cart } = useCart();
+  const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <Link

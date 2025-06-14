@@ -18,14 +18,23 @@ export default async function HomePage() {
 
   return (
     <main className="bg-white text-gray-800">
+
+      {/* === TAILWIND TEST SATIRI === */}
+       <div className="fixed top-0 left-0 right-0 z-[9999] bg-primary text-white text-center py-2">
+       TEST TAILWIND
+       </div>
+
+
+
+      
       {/* Hero */}
       <HeroCarousel />
-
+     
       {/* Kategori ikonları */}
       <section className="max-w-7xl mx-auto px-4 py-8">
         <CategoryIcons />
       </section>
-
+        
       {/* Ürün listesi */}
       <section className="max-w-7xl mx-auto px-4 py-12">
         <h2 className="text-3xl font-heading font-bold mb-6 text-center">
