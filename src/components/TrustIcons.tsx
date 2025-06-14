@@ -8,9 +8,9 @@ const items = [
   { icon: Clock,       label: 'Ücretsiz İptal'},
 ];
 
-export default function TrustIcons() {
+export default function TrustIcons({ className = '' }: { className?: string }) {
   return (
-    <section className="bg-white py-6">
+    <section className={`bg-white py-6 ${className}`}>
       <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
         {items.map(({ icon: Icon, label }) => (
           <div key={label} className="flex flex-col items-center gap-2">

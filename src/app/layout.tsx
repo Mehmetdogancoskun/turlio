@@ -1,11 +1,20 @@
-// src/app/layout.tsx
-import type { Metadata } from "next";
-import "./globals.css";
-import { CartProvider } from "@/context/CartContext";
+import type { Metadata } from 'next';
+import Script from 'next/script';
+import { Poppins } from 'next/font/google';
+import './globals.css';
+
+import { Header } from '@/components/Header';
+import { CartProvider } from '@/context/CartContext';
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+});
 
 export const metadata: Metadata = {
-  title: "Turlio",
-  description: "Gezilecek turlarınızı ve etkinliklerinizi kolayca rezerve edin",
+  title: 'Turlio',
+  description:
+    'Gezilecek turlarınızı ve etkinliklerinizi kolayca rezerve edin',
 };
 
 export default function RootLayout({
@@ -16,21 +25,20 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <head>
-        {/* Google Fonts */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lato:wght@400;500;700&display=swap"
-          rel="stylesheet"
+        {/* Google Maps JS (yalnızca Places, bölge=AE) */}
+        <Script
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&region=AE`}
+          strategy="beforeInteractive"
         />
-
-        {/* Google Maps JS API */}
-        <script
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.GOOGLE_MAPS_API_KEY}&libraries=places`}
-          async
-          defer
-        ></script>
       </head>
-      <body className="antialiased bg-[var(--color-background)] text-[var(--color-foreground)]">
-        <CartProvider>{children}</CartProvider>
+      <body
+        className={`${poppins.className} antialiased bg-gray-50 text-gray-800`}
+      >
+        <CartProvider>
+          <Header />
+          <main>{children}</main>
+          {/* İleride Footer buraya gelecek */}
+        </CartProvider>
       </body>
     </html>
   );

@@ -12,13 +12,15 @@ export const categories: { key: CatKey; label: string; icon: any }[] = [
   { key: 'vize',     label: 'Vize',     icon: ShieldCheck  },
 ];
 
-export default function CategoryIcons({
+// DEĞİŞİKLİK: 'export default function' ifadesini,
+// isimlendirilmiş bir export olan 'export const' ile değiştirdik.
+export const CategoryIcons = ({
   selected,
   onSelect,
 }: {
   selected: CatKey | null;
   onSelect: (cat: CatKey | null) => void;
-}) {
+}) => {
   return (
     <div className="flex justify-center items-center gap-8 my-8">
       {categories.map(({ key, label, icon: Icon }) => (

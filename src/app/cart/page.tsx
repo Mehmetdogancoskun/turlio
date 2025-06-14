@@ -1,24 +1,21 @@
 // src/app/cart/page.tsx
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
 
 export default function CartPage() {
-  const { items, removeItem, clearCart } = useCart();
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const { cart, removeFromCart, clearCart } = useCart();
 
-  const totalPrice = items.reduce(
-    (sum, i) => sum + i.fiyat * i.quantity,
+  // Genel toplam (lineTotal varsa onu, yoksa unitPrice × qty)
+  const totalPrice = cart.reduce(
+    (sum, i) => sum + (i.lineTotal ?? i.unitPrice * (i.quantity ?? 1) ?? 0),
     0
   );
 
-  /* Sepet boşsa  ----------------------------------------- */
-  if (items.length === 0) {
+  // Sepet boşsa ------------------------------------------------------
+  if (cart.length === 0) {
     return (
       <main className="bg-gray-900 min-h-screen text-white p-10 flex flex-col items-center">
         <h1 className="text-3xl mb-6">Sepetiniz Boş</h1>
@@ -32,22 +29,7 @@ export default function CartPage() {
     );
   }
 
-  /* Sepet doluyken  -------------------------------------- */
-  const handleCheckout = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/checkout-cart', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
-      });
-      const { url } = await res.json();
-      if (url) router.push(url);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Sepet doluyken ---------------------------------------------------
   return (
     <main className="bg-gray-900 min-h-screen text-white p-10">
       <h1 className="text-3xl mb-8 flex items-center gap-3">
@@ -56,19 +38,20 @@ export default function CartPage() {
 
       {/* Ürün listesi */}
       <ul className="space-y-6">
-        {items.map(item => (
+        {cart.map((item, idx) => (
           <li
-            key={item.id}
+            key={`${item.id}-${idx}`}           // benzersiz anahtar
             className="flex justify-between items-center border-b border-gray-700 pb-4"
           >
             <div>
               <p className="font-semibold">{item.tur_adi}</p>
               <p className="text-sm text-gray-400">
-                {item.quantity} × {item.fiyat.toFixed(2)} AED
+                Toplam:{' '}
+                {(item.lineTotal ?? item.unitPrice ?? 0).toFixed(2)} AED
               </p>
             </div>
             <button
-              onClick={() => removeItem(item.id)}
+              onClick={() => removeFromCart(idx)}
               className="text-red-500 hover:text-red-400"
             >
               Sil
@@ -91,11 +74,11 @@ export default function CartPage() {
         </p>
 
         <Link
-  href="/cart/confirm"
-  className="mt-6 bg-emerald-600 hover:bg-emerald-700 px-6 py-2 rounded inline-block text-center"
->
-  Devam Et
-</Link>
+          href="/cart/confirm"
+          className="mt-6 bg-emerald-600 hover:bg-emerald-700 px-6 py-2 rounded inline-block text-center"
+        >
+          Devam Et
+        </Link>
       </div>
 
       <Link

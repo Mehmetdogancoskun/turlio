@@ -1,38 +1,38 @@
 // src/app/page.tsx
+
 import HeroCarousel from '@/components/HeroCarousel';
-import ProductList  from '@/components/ProductList';
-import TrustIcons   from '@/components/TrustIcons';
-import CartIcon     from '@/components/CartIcon';
+import { CategoryIcons } from '@/components/CategoryIcons';
+import { ProductList } from '@/components/ProductList';
 import { supabase } from '@/lib/supabaseClient';
 
 export default async function HomePage() {
-  /* Ürünleri çek */
-  const { data: products } = await supabase
+  // 1) Ürünleri alıyoruz
+  const { data: products, error } = await supabase
     .from('urunler')
-    .select('*')
-    .order('id', { ascending: true });
+    .select('*');  // <<< noktalı virgül burada
+
+  if (error) {
+    console.error('Error fetching products:', error);
+    // İsterseniz burada kullanıcıya hata mesajı gösteren bir UI ekleyebilirsiniz
+  }
 
   return (
-    <>
-      {/* Hero + sepet ikonu */}
-      <header className="relative">
-        <HeroCarousel />
-        <div className="absolute top-4 right-4 z-20">
-          <CartIcon />
-        </div>
-      </header>
+    <main className="bg-white text-gray-800">
+      {/* Hero */}
+      <HeroCarousel />
 
-      {/* Güven ikonları */}
-      <TrustIcons className="max-w-7xl mx-auto -mt-12 mb-10 relative z-10" />
+      {/* Kategori ikonları */}
+      <section className="max-w-7xl mx-auto px-4 py-8">
+        <CategoryIcons />
+      </section>
 
-      {/* Ana içerik */}
-      <main className="bg-gray-900 min-h-screen p-6">
-        <h1 className="text-3xl font-bold text-white mb-6 text-center">
-          Ürün Listesi
-        </h1>
-
+      {/* Ürün listesi */}
+      <section className="max-w-7xl mx-auto px-4 py-12">
+        <h2 className="text-3xl font-heading font-bold mb-6 text-center">
+          Turlar & Aktiviteler
+        </h2>
         <ProductList products={products || []} />
-      </main>
-    </>
+      </section>
+    </main>
   );
 }

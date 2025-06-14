@@ -22,7 +22,7 @@ export default function RezervasyonForm({
   subCategory: string;
 }) {
   const router = useRouter();
-  const { addItem } = useCart();
+  const { addToCart } = useCart();
 
   /* ---------- State ---------- */
   const [fullName, setFullName] = useState('');
@@ -111,10 +111,11 @@ export default function RezervasyonForm({
   /* ---------- Submit ---------- */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addItem({
+    addToCart({
       id: product.id,
       tur_adi: product.tur_adi,
-      fiyat: total,
+      unitPrice: product.fiyat,  // tek yetişkin birim fiyatı
+      lineTotal: total,          // hesaplanmış genel toplam
       quantity: 1,
       fullName,
       phone,

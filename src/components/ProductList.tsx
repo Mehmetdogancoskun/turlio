@@ -3,10 +3,12 @@
 
 import { useState, type ChangeEvent } from 'react';
 import ProductCard from './ProductCard';
-import CategoryIcons, { CatKey } from './CategoryIcons';
+// DEĞİŞİKLİK: CategoryIcons importunu düzelttik. Artık default değil.
+import { CategoryIcons, type CatKey } from './CategoryIcons';
 import SearchBar from './SearchBar';
 
-export default function ProductList({ products }: { products: any[] }) {
+// DEĞİŞİKLİK: 'export default function' yerine 'export const' kullandık.
+export const ProductList = ({ products }: { products: any[] }) => {
   const [selectedCat, setSelectedCat] = useState<CatKey | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -34,7 +36,7 @@ export default function ProductList({ products }: { products: any[] }) {
       />
 
       {/* Ürün kartları */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 mt-8">
         {filtered.map(item => (
           <ProductCard key={item.id} product={item} />
         ))}
