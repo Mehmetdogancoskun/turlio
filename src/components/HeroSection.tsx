@@ -1,19 +1,19 @@
-'use client';
+/*'use client';
 
 import React from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from 'next/link';*/
 
 /*  ◆◆ YALNIZCA BU 3 SATIR KALSIN ◆◆  */
 const IMAGE_PATHS = ['/hero/1.webp', '/hero/2.webp', '/hero/3.webp'];
 
-export const HeroSection = () => {
+/*export const HeroSection = () => {
   const [emblaRef] = useEmblaCarousel(
     { loop: true },
     [Autoplay({ delay: 4000, stopOnInteraction: false })]
-  );
+  );*/
 
   return (
     <div className="embla" ref={emblaRef}>

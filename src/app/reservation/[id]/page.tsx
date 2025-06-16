@@ -1,19 +1,26 @@
-// src/app/reservation/[id]/page.tsx
-import { supabase } from '@/lib/supabaseClient';
-import StepIndicator from '@/components/StepIndicator';
-import BackToHomeButton from '@/components/BackToHomeButton';
-import RezervasyonForm from '@/components/RezervasyonForm';
+/*  src/app/reservation/[id]/page.tsx
+    ----------------------------------------------------------
+    Rezervasyon adımı – ortak PageShell içinde açılır;
+    dolayısıyla Header + Footer + tema her sayfada aynıdır.  */
 
+import PageShell        from '@/components/PageShell';
+import BackButton       from '@/components/BackButton';
+import StepIndicator    from '@/components/StepIndicator';
+import RezervasyonForm  from '@/components/RezervasyonForm';
+import { supabase }     from '@/lib/supabaseClient';
+
+/* ——— DB tipi -------------------------------------------------- */
 interface Product {
   id: number;
   tur_adi: string;
   para_birimi: string;
   fiyat: number;
-  price_child: number | null;
+  price_child:  number | null;
   price_infant: number | null;
-  sub_category: string | null;   // ← eklendi
+  sub_category: string | null;
 }
 
+/* ——— Server component ---------------------------------------- */
 export default async function ReservationPage({
   params,
 }: {
@@ -21,46 +28,65 @@ export default async function ReservationPage({
 }) {
   const productId = Number(params.id);
 
+  /* veriyi çek */
   const { data: product, error } = await supabase
     .from<Product>('urunler')
     .select(
-      'id,tur_adi,fiyat,para_birimi,price_child,price_infant,sub_category' // ← sub_category eklendi
+      'id,tur_adi,fiyat,para_birimi,price_child,price_infant,sub_category'
     )
     .eq('id', productId)
     .single();
 
+  /* ------------- Hata / bulunamadı ------------- */
   if (error || !product) {
     return (
-      <main className="bg-gray-900 min-h-screen text-white p-10 flex flex-col items-center">
-        <BackToHomeButton />
-        <p className="mt-6">Ürün bulunamadı.</p>
-      </main>
+      <PageShell>
+        <div className="mx-auto max-w-xl py-24 text-center space-y-6">
+          <BackButton />
+          <p className="text-xl font-semibold">Ürün bulunamadı.</p>
+        </div>
+      </PageShell>
     );
   }
 
-  product.price_child  = product.price_child  ?? 0;
-  product.price_infant = product.price_infant ?? 0;
+  /* sayısal alanları garanti altına al */
+  const adult   = product.fiyat;
+  const child   = product.price_child  ?? 0;
+  const infant  = product.price_infant ?? 0;
 
+  /* ------------- Normal Görünüm ------------- */
   return (
-    <main className="bg-gray-900 min-h-screen text-white p-10">
-      <StepIndicator currentStep={1} />
+    <PageShell>
+      <div className="mx-auto max-w-3xl px-4 pb-16 space-y-8">
+        {/* üst şerit */}
+        <div className="flex items-center justify-between pt-6">
+          <BackButton />
+          <StepIndicator currentStep={2} />
+        </div>
 
-      <div className="mt-4 mb-6">
-        <BackToHomeButton />
+        {/* başlık + özet fiyatlar */}
+        <header className="space-y-3">
+          <h1 className="text-3xl font-heading font-bold">
+            {product.tur_adi}
+          </h1>
+          <p className="text-lg">
+            Yetişkin: <b>{adult.toFixed(2)}</b> {product.para_birimi} &nbsp;|&nbsp;
+            Çocuk: <b>{child.toFixed(2)}</b> {product.para_birimi} &nbsp;|&nbsp;
+            Bebek: <b>{infant.toFixed(2)}</b> {product.para_birimi}
+          </p>
+        </header>
+
+        {/* form (client component) */}
+        <RezervasyonForm
+          product={{
+            ...product,
+            fiyat: adult,
+            price_child: child,
+            price_infant: infant,
+          }}
+          subCategory={product.sub_category ?? ''}
+        />
       </div>
-
-      <h1 className="text-3xl font-bold mb-4">{product.tur_adi}</h1>
-      <p className="text-xl mb-8">
-        Yetişkin: {product.fiyat.toFixed(2)} {product.para_birimi} |{' '}
-        Çocuk: {product.price_child.toFixed(2)} {product.para_birimi} |{' '}
-        Bebek: {product.price_infant.toFixed(2)} {product.para_birimi}
-      </p>
-
-      {/* Client-side Rezervasyon Formu */}
-      <RezervasyonForm
-        product={product}
-        subCategory={product.sub_category ?? ''}
-      />
-    </main>
+    </PageShell>
   );
 }

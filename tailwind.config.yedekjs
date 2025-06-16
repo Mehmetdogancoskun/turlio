@@ -1,0 +1,37 @@
+// tailwind.config.js
+const defaultTheme = require('tailwindcss/defaultTheme');
+
+/**  @type {import('tailwindcss').Config} */
+module.exports = {
+  /* 1)  Taranacak dosyalar ------------------------------------------------- */
+  content: [
+    './app/**/*.{js,ts,jsx,tsx,mdx}',     // 🔹 kök “app/” klasörü
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}', // 🔹 “src/app/” kullananlar için
+    './src/components/**/*.{js,ts,jsx,tsx}',
+    './src/**/*.{js,ts,jsx,tsx}',
+  ],
+
+  /* 2)  Karanlık mod: OS ayarı (istersen `class` yapabilirsin) ------------- */
+  darkMode: 'media',
+
+  /* 3)  Tema genişletmeleri ------------------------------------------------ */
+  theme: {
+    extend: {
+      colors: {
+        primary:   '#2196F3',
+        secondary: '#FF6E40',
+        accent:    '#4CAF50',
+      },
+      fontFamily: {
+        body:    ['var(--font-inter)', ...defaultTheme.fontFamily.sans],
+        heading: ['var(--font-poppins)', ...defaultTheme.fontFamily.sans],
+      },
+    },
+  },
+
+  /* 4)  Opsiyonel eklentiler ---------------------------------------------- */
+  plugins: [
+    // require('@tailwindcss/forms'),
+    // require('@tailwindcss/typography'),
+  ],
+};

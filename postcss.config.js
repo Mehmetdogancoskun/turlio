@@ -1,7 +1,12 @@
-/** @type {import('postcss').Config} */
+/**  postcss.config.js  */
 module.exports = {
   plugins: {
+    // Tailwind v4’ün PostCSS eklentisi
     '@tailwindcss/postcss': {},
-    'autoprefixer': {},
+
+    // (İsteğe bağlı) CSS nesting isterseniz bunu açın
+    // 'postcss-nesting': {},
+
+    autoprefixer: {},
   },
 };

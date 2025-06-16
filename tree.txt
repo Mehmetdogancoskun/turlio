@@ -1,0 +1,85 @@
+.
+├── README.md
+├── eslint.config.mjs
+├── next-env.d.ts
+├── next.config.js
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── public
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── hero
+│   │   ├── 1.webp
+│   │   ├── 2.webp
+│   │   └── 3.webp
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── src
+│   ├── app
+│   │   ├── HomeClient.tsx
+│   │   ├── about
+│   │   │   └── page.tsx
+│   │   ├── api
+│   │   │   ├── book
+│   │   │   ├── checkout
+│   │   │   ├── checkout-cart
+│   │   │   └── stripe-webhook
+│   │   ├── blog
+│   │   │   └── page.tsx
+│   │   ├── careers
+│   │   │   └── page.tsx
+│   │   ├── cart
+│   │   │   ├── confirm
+│   │   │   └── page.tsx
+│   │   ├── checkout
+│   │   │   ├── checkout
+│   │   │   └── page.tsx
+│   │   ├── contact
+│   │   │   └── page.tsx
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── help
+│   │   │   └── page.tsx
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   ├── privacy
+│   │   │   └── page.tsx
+│   │   ├── products
+│   │   │   ├── [id]
+│   │   │   ├── tours
+│   │   │   ├── transfers
+│   │   │   └── visa
+│   │   ├── reservation
+│   │   │   └── [id]
+│   │   ├── reservations
+│   │   │   └── page.tsx
+│   │   └── success
+│   │       └── page.tsx
+│   ├── components
+│   │   ├── BackToHomeButton.tsx
+│   │   ├── CartIcon.tsx
+│   │   ├── CategoryIcons.tsx
+│   │   ├── Footer.tsx
+│   │   ├── Header.tsx
+│   │   ├── HeroCarousel.tsx
+│   │   ├── HeroSection.tsx
+│   │   ├── ProductCard.tsx
+│   │   ├── ProductList.tsx
+│   │   ├── RezervasyonForm.tsx
+│   │   ├── SimilarProducts.tsx
+│   │   ├── StepIndicator.tsx
+│   │   └── TrustIcons.tsx
+│   ├── context
+│   │   └── CartContext.tsx
+│   └── lib
+│       ├── sendEmail.ts
+│       ├── stripe.ts
+│       └── supabaseClient.ts
+├── tailwind.config.yedekjs
+├── test-mail.js
+├── tree.txt
+└── tsconfig.json
+
+31 directories, 52 files
