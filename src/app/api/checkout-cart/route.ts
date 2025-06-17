@@ -1,14 +1,13 @@
 /* ──────────────────────────────────────────────────────────────
    src/app/api/checkout-cart/route.ts
-   –  Sepeti Stripe’a aktarır + Supabase’e booking yazar
+   – Sepeti Stripe’a aktarır + Supabase’e booking yazar
+   (Ön onay e‑postası kaldırıldı – mail yalnızca webhook’ta gönderilecek)
 ────────────────────────────────────────────────────────────── */
-import { NextResponse }      from 'next/server'
-import { stripe }            from '@/lib/stripe'
-import { supabase }          from '@/lib/supabaseClient'
-import { sendEmail }         from '@/lib/sendEmail'
-import type { EmailContent } from '@/lib/sendEmail'
+import { NextResponse } from 'next/server'
+import { stripe }       from '@/lib/stripe'
+import { supabase }     from '@/lib/supabaseClient'
 
-export async function POST (req: Request) {
+export async function POST(req: Request) {
   try {
     /* ---------- 1. Gövde kontrolü ---------- */
     const { items } = await req.json()
@@ -19,7 +18,6 @@ export async function POST (req: Request) {
     /* ---------- 2. booking_ref üret ---------- */
     const { data: seq, error: seqErr } = await supabase.rpc('next_booking_seq')
     if (seqErr || seq == null) {
-      
       return NextResponse.json({ error: 'Sıra numarası alınamadı' }, { status: 500 })
     }
     const bookingRef = `${new Date().getFullYear()}-${String(seq).padStart(6, '0')}`
@@ -35,9 +33,9 @@ export async function POST (req: Request) {
     }))
 
     const session = await stripe.checkout.sessions.create({
-      mode                 : 'payment',
-      client_reference_id  : bookingRef,
-      payment_method_types : ['card'],
+      mode                : 'payment',
+      client_reference_id : bookingRef,
+      payment_method_types: ['card'],
       line_items,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?ref=${bookingRef}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url : `${process.env.NEXT_PUBLIC_SITE_URL}/cart`,
@@ -46,18 +44,13 @@ export async function POST (req: Request) {
     /* ---------- 4. Booking tablolarına yaz ---------- */
     const insertRows = items.map((it: any) => {
       const qty   = Number(it.quantity || 1)
-      const price = Number(it.amount) / 100  // fils → dirhem
+      const price = Number(it.amount) / 100 // fils → AED
 
-      // 👇 burada hem it.tarih hem it.date baktık, pickup_time da aynı şekilde
-      const rawDate = it.tarih ?? it.date ?? null
-      const tarihToInsert = typeof rawDate === 'string'
-        ? rawDate.slice(0,10)  // "2025-06-24T.." → "2025-06-24"
-        : rawDate
+      const rawDate   = it.tarih ?? it.date ?? null
+      const tarihFix  = typeof rawDate === 'string' ? rawDate.slice(0, 10) : rawDate
 
       const rawPickup = it.pickup_time ?? it.pickup ?? null
-      const pickupToInsert = typeof rawPickup === 'string'
-        ? rawPickup.trim()
-        : null
+      const pickupFix = typeof rawPickup === 'string' ? rawPickup.trim() : null
 
       return {
         booking_ref : bookingRef,
@@ -68,9 +61,9 @@ export async function POST (req: Request) {
         adult_count : it.adult      ?? 0,
         child_count : it.child      ?? 0,
         infant_count: it.infant     ?? 0,
-        tarih       : tarihToInsert,      // ← düzeltildi
-        pickup_time : pickupToInsert,     // ← düzeltildi
-        otel_adi    : it.otel      ?? it.hotel  ?? '',
+        tarih       : tarihFix,
+        pickup_time : pickupFix,
+        otel_adi    : it.otel ?? it.hotel ?? '',
         region      : it.region     ?? '',
         child_ages  : it.childAges  ?? [],
         total       : price * qty,
@@ -84,40 +77,14 @@ export async function POST (req: Request) {
       console.error('❌ Supabase insert error:', dbErr)
       return NextResponse.json({ error: 'DB insert failed' }, { status: 500 })
     }
-    
-    /* 5) E-postayı gönder (ve logla) */
-    try {
-      const first = insertRows[0]
-      const grandTotal = insertRows.reduce((sum, r) => sum + r.total, 0).toFixed(2)
-      const emailPayload: EmailContent = {
-        to     : first.email!,
-        subject: `Turlio Rezervasyon Onayı • ${bookingRef}`,
-        html   : `
-          <h2>Rezervasyonunuz alındı 🎉</h2>
-          <p>Sayın <strong>${first.fullName}</strong>,</p>
-          <p>Aşağıdaki rezervasyon(lar)ınız başarıyla oluşturuldu.</p>
-          <ul>
-            ${insertRows.map(r => `<li>${r.product_id} – ${r.total.toFixed(2)} AED</li>`).join('')}
-          </ul>
-          <p><strong>Genel Toplam: ${grandTotal} AED</strong></p>
-          <p>Rezervasyon Kodu: <strong>${bookingRef}</strong></p>
-        `,
-      }
-      console.log('📧 Sending confirmation email to', first.email)
-      await sendEmail(emailPayload)
-      console.log('📧 Confirmation email sent successfully')
-    } catch (mailErr) {
-      console.error('❌ Mail gönderilemedi:', mailErr)      // ✔️ oluşan hatayı console’a bas
-    }
 
     /* ---------- 5. Başarılı yanıt ---------- */
     return NextResponse.json({ url: session.url, bookingRef }, { status: 200 })
-
   } catch (err) {
     console.error('❌ checkout-cart error:', err)
     return NextResponse.json(
       { error: 'Sunucu hatası, lütfen tekrar deneyin.' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

@@ -1,23 +1,24 @@
-'use client';
+/* ────────────────────────────────────────────────
+   src/app/cart/page.tsx • Sepet Listeleme
+   (StepIndicator kaldırıldı – artık 4‑adım akışına dâhil değil)
+──────────────────────────────────────────────── */
 
-import Link                 from 'next/link';
-import { ShoppingCart, Trash2 } from 'lucide-react';
-import { useCart }          from '@/context/CartContext';
-import StepIndicator        from '@/components/StepIndicator';
+'use client'
 
-/* -------------------------------------------------------------- */
+import Link                 from 'next/link'
+import { ShoppingCart, Trash2 } from 'lucide-react'
+import { useCart }          from '@/context/CartContext'
+
 export default function CartPage() {
-  const { cart, removeFromCart, clearCart } = useCart();
+  const { cart, removeFromCart, clearCart } = useCart()
 
-  /* Genel toplam  (lineTotal yoksa unitPrice × quantity) */
+  /* Genel toplam — lineTotal yoksa unitPrice × quantity */
   const grandTotal = cart.reduce(
-    (sum, i) =>
-      sum +
-      (i.lineTotal ?? ((i.unitPrice ?? 0) * (i.quantity ?? 1))),
+    (sum, i) => sum + (i.lineTotal ?? (i.unitPrice ?? 0) * (i.quantity ?? 1)),
     0,
-  );
+  )
 
-  /* ───────────── 1) SEPET BOŞ ───────────── */
+  /* ───────────── 1) SEPET BOŞ ───────────── */
   if (cart.length === 0) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-24 text-center">
@@ -31,17 +32,14 @@ export default function CartPage() {
           Alışverişe Devam Et
         </Link>
       </main>
-    );
+    )
   }
 
-  /* ───────────── 2) SEPET DOLU ───────────── */
+  /* ───────────── 2) SEPET DOLU ───────────── */
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 text-gray-800">
-      {/* Adım 1 / 3 */}
-      <StepIndicator currentStep={1} />
-
       {/* Başlık */}
-      <h1 className="mt-6 mb-8 flex items-center gap-3 text-3xl font-heading font-bold">
+      <h1 className="mb-8 flex items-center gap-3 text-3xl font-heading font-bold">
         <ShoppingCart className="h-8 w-8 text-primary" />
         Sepetiniz
       </h1>
@@ -58,7 +56,7 @@ export default function CartPage() {
               <p className="text-sm text-gray-600">
                 Toplam:{' '}
                 {(item.lineTotal ??
-                  ((item.unitPrice ?? 0) * (item.quantity ?? 1))
+                  (item.unitPrice ?? 0) * (item.quantity ?? 1)
                 ).toFixed(2)}{' '}
                 {item.para_birimi ?? 'AED'}
               </p>
@@ -91,7 +89,7 @@ export default function CartPage() {
         </Link>
       </div>
 
-      {/* Alışverişe devam – sepet DOLUyken de gösteriyoruz */}
+      {/* Alışverişe devam – sepet doluyken de gösteriyoruz */}
       <Link
         href="/"
         className="block mt-10 text-center text-primary underline hover:opacity-80"
@@ -99,5 +97,5 @@ export default function CartPage() {
         Alışverişe Devam Et
       </Link>
     </main>
-  );
+  )
 }

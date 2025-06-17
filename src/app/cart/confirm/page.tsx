@@ -96,7 +96,7 @@ export default function ConfirmPage () {
   /* ── 4 · JSX ─────────────────────────────────────────────── */
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 text-gray-800">
-      <StepIndicator currentStep={2} />
+      <StepIndicator currentStep={3} />
 
       <h1 className="mt-8 mb-6 text-center text-3xl font-heading font-bold">
         Sipariş Özeti

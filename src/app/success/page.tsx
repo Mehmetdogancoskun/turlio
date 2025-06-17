@@ -115,7 +115,7 @@ export default function SuccessPage() {
   /* ---------- JSX ----------------------------------------- */
   return (
     <main className="bg-white text-gray-800 px-4 py-10 min-h-screen flex flex-col items-center">
-      <StepIndicator currentStep={3} />
+      <StepIndicator currentStep={4} />
 
       <h1 className="text-4xl font-bold mt-6 mb-2">Teşekkürler!</h1>
 
