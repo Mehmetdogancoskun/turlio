@@ -1,41 +1,43 @@
 /*  src/app/reservation/[id]/page.tsx
     ----------------------------------------------------------
     Rezervasyon adımı – ortak PageShell içinde açılır;
-    dolayısıyla Header + Footer + tema her sayfada aynıdır.  */
+    Header + Footer + tema her sayfada aynıdır.
+----------------------------------------------------------------*/
 
-import PageShell        from '@/components/PageShell';
-import BackButton       from '@/components/BackButton';
-import StepIndicator    from '@/components/StepIndicator';
-import RezervasyonForm  from '@/components/RezervasyonForm';
-import { supabase }     from '@/lib/supabaseClient';
+import PageShell        from '@/components/PageShell'
+import BackButton       from '@/components/BackButton'
+import StepIndicator    from '@/components/StepIndicator'
+import RezervasyonForm  from '@/components/RezervasyonForm'
+import { supabase }     from '@/lib/supabaseClient'
 
 /* ——— DB tipi -------------------------------------------------- */
 interface Product {
-  id: number;
-  tur_adi: string;
-  para_birimi: string;
-  fiyat: number;
-  price_child:  number | null;
-  price_infant: number | null;
-  sub_category: string | null;
+  id: number
+  tur_adi: string
+  para_birimi: string
+  fiyat: number
+  price_child:  number | null
+  price_infant: number | null
+  sub_category: string | null
 }
 
 /* ——— Server component ---------------------------------------- */
 export default async function ReservationPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>         // <- Promise olarak geliyor
 }) {
-  const productId = Number(params.id);
+  const { id }   = await params          // ← önce await
+  const productId = Number(id)
 
   /* veriyi çek */
   const { data: product, error } = await supabase
     .from<Product>('urunler')
     .select(
-      'id,tur_adi,fiyat,para_birimi,price_child,price_infant,sub_category'
+      'id,tur_adi,fiyat,para_birimi,price_child,price_infant,sub_category',
     )
     .eq('id', productId)
-    .single();
+    .single()
 
   /* ------------- Hata / bulunamadı ------------- */
   if (error || !product) {
@@ -46,13 +48,13 @@ export default async function ReservationPage({
           <p className="text-xl font-semibold">Ürün bulunamadı.</p>
         </div>
       </PageShell>
-    );
+    )
   }
 
   /* sayısal alanları garanti altına al */
-  const adult   = product.fiyat;
-  const child   = product.price_child  ?? 0;
-  const infant  = product.price_infant ?? 0;
+  const adult  = product.fiyat
+  const child  = product.price_child  ?? 0
+  const infant = product.price_infant ?? 0
 
   /* ------------- Normal Görünüm ------------- */
   return (
@@ -81,12 +83,12 @@ export default async function ReservationPage({
           product={{
             ...product,
             fiyat: adult,
-            price_child: child,
+            price_child : child,
             price_infant: infant,
           }}
           subCategory={product.sub_category ?? ''}
         />
       </div>
     </PageShell>
-  );
+  )
 }

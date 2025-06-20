@@ -1,11 +1,19 @@
 /* ──────────────────────────────────────────────────────────────
    src/app/api/checkout-cart/route.ts
-   – Sepeti Stripe’a aktarır + Supabase’e booking yazar
-   (Ön onay e‑postası kaldırıldı – mail yalnızca webhook’ta gönderilecek)
+   – Sepeti Stripe’a aktarır + Supabase’e booking yazar
+   (Ön onay e-postası kaldırıldı – mail yalnızca webhook’ta gönderilecek)
 ────────────────────────────────────────────────────────────── */
-import { NextResponse } from 'next/server'
-import { stripe }       from '@/lib/stripe'
-import { supabase }     from '@/lib/supabaseClient'
+import { NextResponse }  from 'next/server'
+import { stripe }        from '@/lib/stripe'
+import { supabase }      from '@/lib/supabaseClient'
+import { createClient }  from '@supabase/supabase-js'
+
+/* admin client → RLS baypas */
+const admin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!,      // .env.local → SUPABASE_SERVICE_KEY=...
+  { auth: { persistSession: false } },
+)
 
 export async function POST(req: Request) {
   try {
@@ -44,13 +52,13 @@ export async function POST(req: Request) {
     /* ---------- 4. Booking tablolarına yaz ---------- */
     const insertRows = items.map((it: any) => {
       const qty   = Number(it.quantity || 1)
-      const price = Number(it.amount) / 100 // fils → AED
+      const price = Number(it.amount) / 100  // fils → AED
 
-      const rawDate   = it.tarih ?? it.date ?? null
-      const tarihFix  = typeof rawDate === 'string' ? rawDate.slice(0, 10) : rawDate
+      const tarihFix  = typeof it.tarih === 'string'
+        ? it.tarih.slice(0, 10) : it.tarih ?? null
 
-      const rawPickup = it.pickup_time ?? it.pickup ?? null
-      const pickupFix = typeof rawPickup === 'string' ? rawPickup.trim() : null
+      const pickupFix = typeof it.pickup_time === 'string'
+        ? it.pickup_time.trim() : it.pickup_time ?? null
 
       return {
         booking_ref : bookingRef,
@@ -72,7 +80,7 @@ export async function POST(req: Request) {
       }
     })
 
-    const { error: dbErr } = await supabase.from('bookings').insert(insertRows)
+    const { error: dbErr } = await admin.from('bookings').insert(insertRows)
     if (dbErr) {
       console.error('❌ Supabase insert error:', dbErr)
       return NextResponse.json({ error: 'DB insert failed' }, { status: 500 })
