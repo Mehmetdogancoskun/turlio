@@ -1,3 +1,4 @@
+console.log('🌐 PUBLISHABLE KEY:', process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 /* src/app/layout.tsx – kök yerleşim  */
 import type { Metadata }  from 'next'
 import { Inter, Poppins } from 'next/font/google'

@@ -1,111 +1,174 @@
-'use client';
+/* ────────────────────────────────────────────────
+   src/context/CartContext.tsx
+──────────────────────────────────────────────── */
+'use client'
 
 import React, {
-  createContext,
-  useState,
-  useEffect,
-  ReactNode,
-  useContext,
-} from 'react';
+  createContext, useState, useEffect, useContext, ReactNode,
+} from 'react'
 
-/* ───────── CartItem tipi ─────────
-   • unitPrice  : tek yetişkin fiyatı (Stripe’a gider)
-   • lineTotal  : bu satır için hesaplanmış toplam (yetişkin+çocuk+…)
-   • quantity   : aynı üründen kaç adet “satır” eklendi (genelde 1)
-   • Diğer alanlar (fullName, tarih…) opsiyoneldir ve
-     [key:string]:any imzası sayesinde tip hatası vermez.
-*/
+/* ——— Satır tipi ——— */
 export interface CartItem {
-  id: number;
-  tur_adi: string;
-  unitPrice: number;
-  lineTotal: number;
-  quantity: number;
-  [key: string]: any; // opsiyonel ekstra alanlar
+  id      : number
+  tur_adi : string
+
+  /* kişi fiyatları */
+  unitPrice   : number          // yetişkin
+  child_price : number          // çocuk  (== unitPrice fallback)
+  infant_price: number          // bebek  (== 0   fallback)
+
+  /* kişi sayıları */
+  adult  : number
+  child  : number
+  infant : number
+  child_ages?: number[]
+
+  /* diğer */
+  quantity         : number      // 1 rezerv. = 1 satır (şimdilik)
+  region_multiplier: number      // ≥1 (varsayılan 1)
+  region?          : string
+  lineTotal        : number
+
+  /* serbest alanlar (tarih, otel, pickup_time vb.) */
+  [key: string]: any
 }
 
-interface CartContextType {
-  cart: CartItem[];
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void;
-  addItem: (item: Omit<CartItem, 'quantity'>) => void; // alias
-  removeFromCart: (index: number) => void;
-  clearCart: () => void;
+/* ——— Misafir ——— */
+export interface GuestInfo {
+  fullname: string
+  phone   : string
+  email   : string
+  hotel   : string
+  room?   : string
+  region? : string
 }
 
-/* ───────── Context ───────── */
-export const CartContext = createContext<CartContextType | undefined>(
-  undefined
-);
+/* ——— Context tipi ——— */
+interface CartCtx {
+  cart          : CartItem[]
+  guestInfo     : GuestInfo | null
+  addToCart     : (i: Omit<CartItem, 'quantity' | 'lineTotal'>) => void
+  updateItem    : (idx: number, p: Partial<CartItem>) => void
+  removeFromCart: (idx: number) => void
+  clearCart     : () => void
+  setGuestInfo  : (g: GuestInfo) => void
+}
 
-/* ───────── Provider ───────── */
+/* ——— Yardımcılar ——— */
+const toNum = (v: unknown) => Number(String(v ?? '0').replace(',', '.'))
+
+const calcLine = (r: Omit<CartItem, 'lineTotal'>) => {
+  const adult  = r.adult  ?? 1
+  const child  = r.child  ?? 0
+  const infant = r.infant ?? 0
+
+  const sub =
+    (toNum(r.unitPrice)    * adult) +
+    (toNum(r.child_price)  * child) +
+    (toNum(r.infant_price) * infant)
+
+  return +(sub * (r.region_multiplier ?? 1)).toFixed(2)
+}
+
+/* ——— Context ——— */
+export const CartContext = createContext<CartCtx | undefined>(undefined)
+
+/* ——— Provider ——— */
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart , setCart ] = useState<CartItem[]>([])
+  const [guest, setGuest] = useState<GuestInfo | null>(null)
 
-  /* Sayfa ilk açıldığında sepeti localStorage'dan yükle */
-useEffect(() => {
-  try {
-    const stored = localStorage.getItem('turlioCart');
-    if (stored) {
-      const parsed: CartItem[] = JSON.parse(stored);
-
-      /* ↻ Eski formatı yeniye çevir */
-      const migrated = parsed.map((it) => {
-        // lineTotal yoksa unitPrice yoksa price/fiyat alanından üret
-        if (it.lineTotal === undefined) {
-          const base = (it as any).unitPrice ?? (it as any).price ?? it.fiyat ?? 0;
-          return {
-            ...it,
-            unitPrice: base,
-            lineTotal: base * (it.quantity ?? 1),
-          };
-        }
-        return it;
-      });
-
-      setCart(migrated);
-    }
-  } catch (err) {
-    console.error('localStorage parse error:', err);
-  }
-}, []);
-
-  
-
-  /* LocalStorage’ye kaydet */
+  /* ▼ localStorage → state (ilk yük) */
   useEffect(() => {
-    localStorage.setItem('turlioCart', JSON.stringify(cart));
-  }, [cart]);
+    try {
+      const rawCart  = localStorage.getItem('turlioCart')
+      const rawGuest = localStorage.getItem('turlioGuest')
 
-  /* Ürün ekle */
-  const addToCart = (item: Omit<CartItem, 'quantity'>) => {
-    setCart((prev) => [
-      ...prev,
-      { ...item, quantity: 1 }, // her rezervasyon ayrı satır
-    ]);
-  };
+      if (rawCart) {
+        const parsed: CartItem[] = JSON.parse(rawCart)
 
-  /* Ürün sil */
-  const removeFromCart = (index: number) => {
-  setCart(prevCart => prevCart.filter((_, i) => i !== index));
-};
+        // eski kayıtları migrate et
+        const fixed = parsed.map(r => ({
+          ...r,
+          unitPrice    : toNum(r.unitPrice   ?? (r as any).fiyat),
+          child_price  : toNum(r.child_price ?? r.unitPrice),
+          infant_price : toNum(r.infant_price ?? 0),
+          adult        : r.adult  ?? 1,
+          child        : r.child  ?? 0,
+          infant       : r.infant ?? 0,
+          quantity     : 1,
+          region_multiplier: r.region_multiplier ?? 1,
+          lineTotal    : r.lineTotal ?? calcLine(r as CartItem),
+        }))
+        setCart(fixed)
+      }
+      if (rawGuest) setGuest(JSON.parse(rawGuest))
+    } catch (e) { console.error('localStorage parse:', e) }
+  }, [])
 
-  /* Sepeti temizle */
-  const clearCart = () => setCart([]);
+  /* ▲ state → localStorage */
+  useEffect(() => {
+    localStorage.setItem('turlioCart' , JSON.stringify(cart))
+    localStorage.setItem('turlioGuest', JSON.stringify(guest))
+  }, [cart, guest])
 
-  const value: CartContextType = {
+  /* ——— Actions ——— */
+  const addToCart = (
+    i: Omit<CartItem, 'quantity' | 'lineTotal'>,
+  ) => {
+    const row: CartItem = {
+      ...i,
+      unitPrice    : toNum(i.unitPrice),
+      child_price  : toNum(i.child_price  ?? i.unitPrice),
+      infant_price : toNum(i.infant_price ?? 0),
+      adult        : i.adult  ?? 1,
+      child        : i.child  ?? 0,
+      infant       : i.infant ?? 0,
+      quantity     : 1,
+      region_multiplier: i.region_multiplier ?? 1,
+      lineTotal    : 0, // geçici
+    }
+    row.lineTotal = calcLine(row)
+    setCart(p => [...p, row])
+  }
+
+  const updateItem = (idx: number, patch: Partial<CartItem>) =>
+    setCart(p => p.map((row, i) => {
+      if (i !== idx) return row
+
+      /* çocuk sayısı azaldıysa child_ages dizisini kısalt */
+      let childAges = row.child_ages
+      if ('child' in patch && childAges) {
+        const len = Math.max(0, Number(patch.child))
+        childAges = childAges.slice(0, len)
+      }
+
+      const merged = { ...row, ...patch, child_ages: childAges }
+      return { ...merged, lineTotal: calcLine(merged) }
+    }))
+
+  const removeFromCart = (idx: number) =>
+    setCart(p => p.filter((_, i) => i !== idx))
+
+  const clearCart = () => setCart([])
+
+  /* ——— Value ——— */
+  const value: CartCtx = {
     cart,
+    guestInfo   : guest,
     addToCart,
-    addItem: addToCart, // geriye dönük uyumluluk
+    updateItem,
     removeFromCart,
     clearCart,
-  };
+    setGuestInfo: setGuest,
+  }
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
-};
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
+}
 
-/* ───────── Hook ───────── */
+/* ——— Hook ——— */
 export const useCart = () => {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error('useCart must be used within a CartProvider');
-  return ctx;
-};
+  const ctx = useContext(CartContext)
+  if (!ctx) throw new Error('useCart must be used within CartProvider')
+  return ctx
+}

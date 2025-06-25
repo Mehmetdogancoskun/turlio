@@ -99,7 +99,7 @@ export async function POST (req: Request) {
 
   const html = `
     <h2 style="margin:0 0 12px">Rezervasyon Onayı – ${bookingRef}</h2>
-    <p>Sayın <strong>${rows[0].fullName || 'Misafir'}</strong>, ödemeniz başarıyla alınmıştır.</p>
+    <p>Sayın <strong>${rows[0].fullname || 'Misafir'}</strong>, ödemeniz başarıyla alınmıştır.</p>
 
     <table border="1" cellpadding="6" style="border-collapse:collapse;font-size:14px;margin:16px 0">
       <thead>

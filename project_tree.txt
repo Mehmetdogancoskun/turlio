@@ -1,0 +1,100 @@
+.
+├── README.md
+├── eslint.config.mjs
+├── next-env.d.ts
+├── next.config.js
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── project_tree.txt
+├── public
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── hero
+│   │   ├── 1.webp
+│   │   ├── 2.webp
+│   │   └── 3.webp
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── src
+│   ├── app
+│   │   ├── HomeClient.tsx
+│   │   ├── about
+│   │   │   └── page.tsx
+│   │   ├── api
+│   │   │   ├── book
+│   │   │   │   └── route.ts
+│   │   │   ├── checkout
+│   │   │   │   └── route.ts
+│   │   │   ├── checkout-cart
+│   │   │   │   └── route.ts
+│   │   │   └── stripe-webhook
+│   │   │       └── route.ts
+│   │   ├── blog
+│   │   │   └── page.tsx
+│   │   ├── careers
+│   │   │   └── page.tsx
+│   │   ├── cart
+│   │   │   ├── confirm
+│   │   │   │   └── page.tsx
+│   │   │   └── page.tsx
+│   │   ├── checkout
+│   │   │   ├── checkout
+│   │   │   └── page.tsx
+│   │   ├── contact
+│   │   │   └── page.tsx
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── help
+│   │   │   └── page.tsx
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   ├── privacy
+│   │   │   └── page.tsx
+│   │   ├── products
+│   │   │   ├── [id]
+│   │   │   │   ├── ProductBody.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── tours
+│   │   │   │   └── page.tsx
+│   │   │   ├── transfers
+│   │   │   │   └── page.tsx
+│   │   │   └── visa
+│   │   │       └── page.tsx
+│   │   ├── reservation
+│   │   │   └── [id]
+│   │   │       └── page.tsx
+│   │   ├── reservations
+│   │   │   └── page.tsx
+│   │   └── success
+│   │       └── page.tsx
+│   ├── components
+│   │   ├── BackButton.tsx
+│   │   ├── BackToHomeButton.tsx
+│   │   ├── CartIcon.tsx
+│   │   ├── CategoryIcons.tsx
+│   │   ├── Footer.tsx
+│   │   ├── Header.tsx
+│   │   ├── HeroCarousel.tsx
+│   │   ├── HeroSection.tsx
+│   │   ├── PageShell.tsx
+│   │   ├── ProductCard.tsx
+│   │   ├── ProductList.tsx
+│   │   ├── RezervasyonForm.tsx
+│   │   ├── SimilarProducts.tsx
+│   │   ├── StepIndicator.tsx
+│   │   └── TrustIcons.tsx
+│   ├── context
+│   │   ├── CartContext.tsx
+│   │   └── SearchContext.tsx
+│   └── lib
+│       ├── sendEmail.ts
+│       ├── stripe.ts
+│       └── supabaseClient.ts
+├── tailwind.config.yedekjs
+├── test-mail.js
+├── tree.txt
+└── tsconfig.json
+
+31 directories, 67 files

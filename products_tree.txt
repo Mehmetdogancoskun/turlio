@@ -1,0 +1,12 @@
+src/app/products
+├── [id]
+│   ├── ProductBody.tsx
+│   └── page.tsx
+├── tours
+│   └── page.tsx
+├── transfers
+│   └── page.tsx
+└── visa
+    └── page.tsx
+
+5 directories, 5 files

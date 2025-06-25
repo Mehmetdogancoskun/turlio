@@ -1,144 +1,121 @@
-'use client';
+/* ────────────────────────────────────────────────
+   src/components/RezervasyonForm.tsx
+   (ürün sayfasındaki gömülü form)
+──────────────────────────────────────────────── */
+'use client'
 
-import { useState, useEffect, useRef, FormEvent } from 'react';
-import { useRouter }   from 'next/navigation';
-import { supabase }    from '@/lib/supabaseClient';
-import { useCart }     from '@/context/CartContext';
+import { useState, useEffect, useRef, FormEvent } from 'react'
+import { useRouter }   from 'next/navigation'
+import { supabase }    from '@/lib/supabaseClient'
+import { useCart }     from '@/context/CartContext'
 
-/* --------------------------------------------------------------
-   Tipler
--------------------------------------------------------------- */
+/* ——— Tipler ——— */
 interface Product {
-  id:            number;
-  tur_adi:       string;
-  para_birimi:   string;
-  fiyat:         number;
-  price_child:   number | null;
-  price_infant:  number | null;
+  id:            number
+  tur_adi:       string
+  para_birimi:   string
+  fiyat:         number
+  price_child:   number | null
+  price_infant:  number | null
 }
 
 interface Props {
-  product:     Product;
-  subCategory: string;              // “transfer” ise alınış saati alanı göster
+  product:     Product
+  subCategory: string          // “transfer” ise alınış saati alanı görünür
 }
 
-/* --------------------------------------------------------------
-   Bileşen
--------------------------------------------------------------- */
+/* ——— Bileşen ——— */
 export default function RezervasyonForm({ product, subCategory }: Props) {
-  const router        = useRouter();
-  const { addToCart } = useCart();
+  const router        = useRouter()
+  const { addToCart } = useCart()
 
-  /* ---------------------------- Form State ---------------------------- */
-  const [fullName , setFullName ] = useState('');
-  const [phone    , setPhone    ] = useState('');
-  const [email    , setEmail    ] = useState('');
-  const [tarih    , setTarih    ] = useState('');
-  const [otel     , setOtel     ] = useState('');
-  const [region   , setRegion   ] = useState('');
+  /* ——— Form state ——— */
+  const [fullName , setFullName ] = useState('')
+  const [phone    , setPhone    ] = useState('')
+  const [email    , setEmail    ] = useState('')
+  const [tarih    , setTarih    ] = useState('')
+  const [otel     , setOtel     ] = useState('')
+  const [region   , setRegion   ] = useState('')     // sadece görüntü/info
 
-  const hotelRef = useRef<HTMLInputElement>(null);
+  const hotelRef = useRef<HTMLInputElement>(null)
 
-  const [pickupTime , setPickupTime ] = useState('');
-  const [adult ,  setAdult ] = useState(1);
-  const [child ,  setChild ] = useState(0);
-  const [infant,  setInfant] = useState(0);
-  const [childAges, setChildAges] = useState<number[]>([]);
+  const [pickupTime , setPickupTime ] = useState('')
+  const [adult , setAdult ]   = useState(1)
+  const [child , setChild ]   = useState(0)
+  const [infant, setInfant]   = useState(0)
+  const [childAges, setChildAges] = useState<number[]>([])
 
-  const [pickupFee , setPickupFee ] = useState(0);   // otel başına ek ücret
-  const [regionMultiplier, setRegionMultiplier] = useState(1);
+  const [pickupFee , setPickupFee ] = useState(0)   // otel-bazlı ek ücret
 
-  /* -------------------- Google Autocomplete (otel) -------------------- */
+  /* ——— Google Places autocomplete (otel) ——— */
   useEffect(() => {
-    if (!hotelRef.current) return;
+    if (!hotelRef.current || !window.google?.maps) return
 
-    const ac = new window.google.maps.places.Autocomplete(
-      hotelRef.current,
-      {
-        types: ['establishment', 'geocode'],
-        componentRestrictions: { country: 'ae' },
-      },
-    );
+    const ac = new window.google.maps.places.Autocomplete(hotelRef.current, {
+      types: ['establishment', 'geocode'],
+      componentRestrictions: { country: 'ae' },
+    })
 
     ac.addListener('place_changed', () => {
-      const place = ac.getPlace();
-      setOtel(place.formatted_address || place.name || '');
+      const place = ac.getPlace()
+      setOtel(place.formatted_address || place.name || '')
 
       const comp = place.address_components?.find(c =>
         c.types.includes('administrative_area_level_1') ||
-        c.types.includes('locality'),
-      );
-      setRegion(comp?.long_name || '');
-    });
-  }, []);
+        c.types.includes('locality')
+      )
+      setRegion(comp?.long_name || '')
+    })
+  }, [])
 
-  /* ---------------------- Pickup ek ücreti (Supabase) ----------------- */
+  /* ——— Pickup ek ücreti ——— */
   useEffect(() => {
-    if (!otel) { setPickupFee(0); return; }
+    if (!otel) { setPickupFee(0); return }
 
-    (async () => {
+    ;(async () => {
       const { data } = await supabase
         .from('oteller')
         .select('pickup_ek_fiyat')
         .eq('ad', otel)
-        .single();
+        .single()
+      setPickupFee(data?.pickup_ek_fiyat ?? 0)
+    })()
+  }, [otel])
 
-      setPickupFee(data?.pickup_ek_fiyat ?? 0);
-    })();
-  }, [otel]);
-
-  /* --------------------- Bölge çarpanı (Supabase) --------------------- */
-  useEffect(() => {
-    if (!region) { setRegionMultiplier(1); return; }
-
-    (async () => {
-      const { data } = await supabase
-        .from('region_pricing')
-        .select('multiplier')
-        .eq('region', region)
-        .single();
-
-      setRegionMultiplier(data?.multiplier ?? 1);
-    })();
-  }, [region]);
-
-  /* ------------- Çocuk sayısına göre yaş listesi senk ----------------- */
+  /* ——— Çocuk yaşları input senkronu ——— */
   useEffect(() => {
     setChildAges(prev => {
-      const arr = [...prev];
-      while (arr.length < child) arr.push(2);
-      while (arr.length > child) arr.pop();
-      return arr;
-    });
-  }, [child]);
+      const arr = [...prev]
+      while (arr.length < child) arr.push(2)
+      while (arr.length > child) arr.pop()
+      return arr
+    })
+  }, [child])
 
-  /* ------------------------- FİYAT HESABI ----------------------------- */
+  /* ——— Fiyat hesabı (bölge çarpanı YOK) ——— */
   const childPrice  = product.price_child  && product.price_child  > 0
     ? product.price_child
-    : product.fiyat;
+    : product.fiyat
+  const infantPrice = product.price_infant || 0
 
-  const infantPrice = product.price_infant || 0;
-
-  const totalBase =
+  const total =
       product.fiyat * adult +
       childPrice     * child +
       infantPrice    * infant +
-      pickupFee      * (adult + child + infant);
+      pickupFee      * (adult + child + infant)
 
-  const total = totalBase * regionMultiplier;
-
-  /* -------------------------- SUBMIT ---------------------------------- */
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  /* ——— SUBMIT ——— */
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
 
     addToCart({
       id:        product.id,
       tur_adi:   product.tur_adi,
-      unitPrice: product.fiyat,          // 1 yetişkin
+      unitPrice: product.fiyat,
       lineTotal: Number(total.toFixed(2)),
       quantity:  1,
 
-      // rezervasyon bilgileri
+      /* rezervasyon ayrıntıları */
       fullName,
       phone,
       email,
@@ -150,43 +127,33 @@ export default function RezervasyonForm({ product, subCategory }: Props) {
       otel,
       region,
       child_ages: childAges,
-    });
+    })
 
-    router.push('/cart');
-  };
+    router.push('/cart')  // → yeni CartPage
+  }
 
-  /* --------------------------- JSX ----------------------------------- */
+  /* ——— JSX ——— */
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-5 max-w-md mx-auto text-gray-800"
-    >
-      {/* ——— TOPLAM FİYAT ——— */}
+    <form onSubmit={handleSubmit} className="space-y-5 max-w-md mx-auto text-gray-800">
+      {/* Toplam fiyat */}
       <p className="text-lg font-semibold">
-        Toplam:&nbsp;
-        {total.toFixed(2)}&nbsp;{product.para_birimi}
+        Toplam: {total.toFixed(2)} {product.para_birimi}
       </p>
 
-      {region && regionMultiplier !== 1 && (
-        <p className="text-sm text-gray-600">
-          Bölge çarpanı: {regionMultiplier.toFixed(2)} ({region})
-        </p>
-      )}
-
-      {/* ——— KİŞİSEL BİLGİLER ——— */}
+      {/* Kişisel bilgiler */}
       <input
         placeholder="Adınız Soyadınız"
         value={fullName}
         onChange={e => setFullName(e.target.value)}
-        className="w-full px-3 py-2 rounded border border-gray-300 bg-gray-100"
+        className="input"
         required
       />
 
       <input
-        placeholder="Telefon (+905…)"
+        placeholder="Telefon (+971…)"
         value={phone}
         onChange={e => setPhone(e.target.value)}
-        className="w-full px-3 py-2 rounded border border-gray-300 bg-gray-100"
+        className="input"
         required
       />
 
@@ -195,16 +162,16 @@ export default function RezervasyonForm({ product, subCategory }: Props) {
         placeholder="E-posta"
         value={email}
         onChange={e => setEmail(e.target.value)}
-        className="w-full px-3 py-2 rounded border border-gray-300 bg-gray-100"
+        className="input"
         required
       />
 
-      {/* ——— TARİH / OTEL / ALINIŞ SAATİ ——— */}
+      {/* Tarih / Otel / Saat */}
       <input
         type="date"
         value={tarih}
         onChange={e => setTarih(e.target.value)}
-        className="w-full px-3 py-2 rounded border border-gray-300 bg-gray-100"
+        className="input"
         required
       />
 
@@ -213,7 +180,8 @@ export default function RezervasyonForm({ product, subCategory }: Props) {
         placeholder="Otel adı veya adres"
         value={otel}
         onChange={e => setOtel(e.target.value)}
-        className="w-full px-3 py-2 rounded border border-gray-300 bg-gray-100"
+        autoComplete="off"
+        className="input"
         required
       />
 
@@ -222,37 +190,35 @@ export default function RezervasyonForm({ product, subCategory }: Props) {
           type="time"
           value={pickupTime}
           onChange={e => setPickupTime(e.target.value)}
-          className="w-full px-3 py-2 rounded border border-gray-300 bg-gray-100"
+          className="input"
         />
       )}
 
-      {/* ——— KİŞİ SAYILARI ——— */}
+      {/* Kişi sayıları */}
       <div className="grid grid-cols-3 gap-2">
         <NumberInput label="Yetişkin" min={1} value={adult}  setValue={setAdult}  />
         <NumberInput label="Çocuk"   min={0} value={child}  setValue={setChild}  />
         <NumberInput label="Bebek"   min={0} value={infant} setValue={setInfant} />
       </div>
 
-      {/* ——— ÇOCUK YAŞLARI ——— */}
+      {/* Çocuk yaşları */}
       {child > 0 && (
         <div>
-          <label className="text-sm block mb-1">Çocuk Yaşları</label>
+          <label className="label">Çocuk Yaşları</label>
           <div className="flex gap-2">
             {childAges.map((age, idx) => (
               <select
                 key={idx}
                 value={age}
                 onChange={e => {
-                  const arr = [...childAges];
-                  arr[idx] = Number(e.target.value);
-                  setChildAges(arr);
+                  const arr = [...childAges]
+                  arr[idx] = Number(e.target.value)
+                  setChildAges(arr)
                 }}
                 className="px-3 py-1 rounded border border-gray-300 bg-gray-100"
               >
                 {Array.from({ length: 17 }, (_, i) => (
-                  <option key={i} value={i}>
-                    {i}
-                  </option>
+                  <option key={i} value={i}>{i}</option>
                 ))}
               </select>
             ))}
@@ -260,28 +226,18 @@ export default function RezervasyonForm({ product, subCategory }: Props) {
         </div>
       )}
 
-      {/* ——— SUBMIT BUTONU ——— */}
+      {/* Submit */}
       <button type="submit" className="btn-primary w-full">
-        Rezervasyonu Sepete Ekle
+        Sepete Ekle
       </button>
     </form>
-  );
+  )
 }
 
-/* --------------------------------------------------------------
-   Yardımcı <NumberInput/> – tekrarı azaltmak için
--------------------------------------------------------------- */
+/* ——— Yardımcı sayı girişi ——— */
 function NumberInput({
-  label,
-  min,
-  value,
-  setValue,
-}: {
-  label: string;
-  min: number;
-  value: number;
-  setValue: (n: number) => void;
-}) {
+  label, min, value, setValue,
+}: { label: string; min: number; value: number; setValue: (n: number) => void }) {
   return (
     <div>
       <label className="text-sm block">{label}</label>
@@ -290,8 +246,8 @@ function NumberInput({
         min={min}
         value={value}
         onChange={e => setValue(Math.max(min, Number(e.target.value)))}
-        className="w-full px-3 py-2 rounded border border-gray-300 bg-gray-100"
+        className="input"
       />
     </div>
-  );
+  )
 }

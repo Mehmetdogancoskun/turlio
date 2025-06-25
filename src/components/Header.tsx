@@ -1,12 +1,15 @@
 /* ────────────────────────────────────────────────
    src/components/Header.tsx
    – Tek Header, arama için SearchContext kullanır
+   – Kategori kısayolları (desktop + mobil) 2025-06-22
 ──────────────────────────────────────────────── */
 
 'use client'
 
 import { useState, useContext, FormEvent, useEffect } from 'react'
 import Link        from 'next/link'
+
+/* ikonlar */
 import {
   ShoppingCart,
   Ticket,
@@ -14,56 +17,71 @@ import {
   Menu,
   X,
 } from 'lucide-react'
-import { CartContext }    from '@/context/CartContext'
-import { useSearch }      from '@/context/SearchContext'
 
-/* Yardımcı linkler  (Sepet & Rezervasyon) */
+/* context’ler */
+import { useCart }       from '@/context/CartContext'
+import { useSearch }     from '@/context/SearchContext'
+
+/* Katagori tanımı (CategoryIcons bileşeniyle aynı kaynaktan) */
+import { categories }      from '@/components/CategoryIcons'
+import { CATEGORY_LABEL }  from '@/lib/categoryMap'
+/*  categories → [
+      { key:'hepsi', label:'Tümü',     icon: … },
+      { key:'tur',   label:'Tur',      icon: … },
+      { key:'transfer', label:'Transfer', icon: … },
+      …
+   ]                                                          */
+
+/* Sepet & Rezervasyon kısayolları */
 const UTIL_LINKS = [
   { href: '/cart',         label: 'Sepet',          Icon: ShoppingCart },
   { href: '/reservations', label: 'Rezervasyonlar', Icon: Ticket       },
 ] as const
 
 export default function Header() {
-  /* ───────────────────────────── state/ctx */
-  const [open, setOpen] = useState(false)
-  const { cart }        = useContext(CartContext)
+  /* ───────── state / ctx */
+  const [open, setOpen]   = useState(false)
+  const { cart }        = useCart()
   const { term, setTerm } = useSearch()
 
-  /* toplam ürün adedi */
-  const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0)
+  /* toplam adet (rozet) */
+  const cartCount = cart.reduce((s, l) => s + l.quantity, 0)
 
-  /* form submit’inde sayfa yenileme olmasın */
-  const submit = (e: FormEvent) => e.preventDefault()
+  /* form submit → sayfa yenilenmesin */
+  const stopRefresh = (e: FormEvent) => e.preventDefault()
 
-  /* ESC = menü kapat */
+  /* ESC → menü kapat */
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-    document.addEventListener('keydown', esc)
-    return () => document.removeEventListener('keydown', esc)
+    window.addEventListener('keydown', esc)
+    return () => window.removeEventListener('keydown', esc)
   }, [])
 
-  /* body scroll lock (mobil menü açıkken) */
+  /* body scroll lock (mobil menü) */
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
   }, [open])
 
-  /* ───────────────────────────── render */
+  /* ───────── JSX */
   return (
     <header className="sticky top-0 z-50 bg-primary text-white shadow-md">
-      {/* Üst bar ---------------------------------------------------- */}
+      {/* Üst bar */}
       <div className="border-b border-white/10 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4">
+        <div className="mx-auto flex h-14 max-w-7xl items-center gap-4">
 
-          {/* logo ---------------------------------------------------- */}
-          <Link href="/" className="shrink-0 text-xl font-extrabold tracking-tight">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="shrink-0 text-xl font-extrabold tracking-tight"
+          >
             Turlio
           </Link>
 
-          {/* arama  (lg ≥) ---------------------------------------- */}
+          {/* Arama (lg ▲) */}
           <form
-            onSubmit={submit}
-            className="hidden lg:flex flex-1 max-w-xl"
+            onSubmit={stopRefresh}
             role="search"
+            className="hidden lg:flex flex-1 max-w-xl"
           >
             <input
               value={term}
@@ -81,8 +99,26 @@ export default function Header() {
             </button>
           </form>
 
-          {/* sağ ikonlar ------------------------------------------- */}
-          <ul className="hidden md:flex items-center gap-6">
+          {/* ▼ Kategori kısa yolları (yalnızca lg ▲) */}
+          <nav className="hidden lg:flex items-center gap-4">
+            {categories
+              .filter(c => c.key !== 'hepsi')
+              .map(({ key, label, icon: Icon }) => (
+                <Link
+                  key={key}
+                  href={`/products/category/${key}`}
+                  title={CATEGORY_LABEL[key]}
+                  className="flex flex-col items-center text-xs px-2 py-1
+                             rounded hover:bg-white/10 transition"
+                >
+                  <Icon className="h-5 w-5 mb-0.5" />
+                  {label}
+                </Link>
+              ))}
+          </nav>
+
+          {/* Sepet / Rezervasyon / Dil (md ▲) */}
+          <ul className="hidden md:flex items-center gap-6 ml-auto">
             {UTIL_LINKS.map(({ href, label, Icon }) => (
               <li key={href} className="relative">
                 <Link
@@ -102,7 +138,7 @@ export default function Header() {
               </li>
             ))}
 
-            {/* dil / para birimi */}
+            {/* Dil & Para birimi */}
             <li>
               <button
                 title="Dil & Para birimi"
@@ -114,9 +150,9 @@ export default function Header() {
             </li>
           </ul>
 
-          {/* hamburger --------------------------------------------- */}
+          {/* Hamburger (md ▼) */}
           <button
-            className="md:hidden"
+            className="md:hidden ml-auto"
             onClick={() => setOpen(o => !o)}
             aria-label="Menüyü Aç / Kapat"
           >
@@ -125,11 +161,11 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobil panel ---------------------------------------------- */}
+      {/* Mobil panel */}
       {open && (
         <div className="md:hidden bg-primary px-4 pb-6">
           {/* Arama (mobil) */}
-          <form onSubmit={submit} role="search" className="my-4 flex">
+          <form onSubmit={stopRefresh} role="search" className="my-4 flex">
             <input
               value={term}
               onChange={e => setTerm(e.target.value)}
@@ -146,13 +182,13 @@ export default function Header() {
           </form>
 
           {/* Kısa bağlantılar */}
-          <ul className="flex flex-col gap-4">
+          <ul className="flex flex-col gap-4 mb-6">
             {UTIL_LINKS.map(({ href, label, Icon }) => (
               <li key={href}>
                 <Link
                   href={href}
-                  className="flex items-center gap-3 py-2 hover:bg-white/10 rounded-lg"
                   onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 py-2 hover:bg-white/10 rounded-lg"
                 >
                   <Icon size={20} />
                   {label}
@@ -166,6 +202,23 @@ export default function Header() {
               </li>
             ))}
           </ul>
+
+          {/* Mobil kategori linkleri */}
+          <nav className="flex flex-wrap gap-4">
+            {categories
+              .filter(c => c.key !== 'hepsi')
+              .map(({ key, label, icon: Icon }) => (
+                <Link
+                  key={key}
+                  href={`/products/category/${key}`}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm"
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </Link>
+              ))}
+          </nav>
         </div>
       )}
     </header>
