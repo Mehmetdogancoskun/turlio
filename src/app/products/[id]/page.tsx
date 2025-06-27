@@ -10,7 +10,7 @@ import PageShell         from '@/components/PageShell'
 import BackButton        from '@/components/BackButton'
 import ProductBody       from './ProductBody'
 
-/** 
+/**
  *  Statik-önbellek (ISR) istiyorsanız satırı açın:
  *  export const dynamic = 'force-static'
  */
@@ -20,9 +20,10 @@ interface Params {
   params: { id: string }
 }
 
-export default function ProductPage({ params }: Params) {
+export default async function ProductPage({ params }: Params) {
   /* URL parametresini güvenli biçimde sayıya çevir */
-  const id = Number.parseInt(params.id ?? '', 10)
+  const { id: rawId } = await params         // <-- 'await' ekledik
+  const id = Number.parseInt(rawId ?? '', 10)
 
   /* Geçersiz ID → 404 */
   if (!id) return notFound()
