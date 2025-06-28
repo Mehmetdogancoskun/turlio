@@ -17,14 +17,12 @@ declare global {
   }
 }
 
-/* ───────── Zod şema ───────── */
+/* ───────── Şema ───────── */
 const schema = z.object({
   fullname: z.string().min(3, 'Ad Soyad gerekli'),
-  phone: z
-    .string()
-    .regex(/^\+?\d.{6,}$/, 'Geçerli telefon girin (örn. +905…)'),
+  phone: z.string().regex(/^\+?\d.{6,}$/, 'Geçerli telefon girin'),
   email: z.string().email('Geçerli e-posta girin'),
-  hotel: z.string().min(2, 'Otel adı gerekli'),
+  hotel: z.string().min(2, 'Otel / Adres gerekli'),
   region: z.enum([
     'dubai',
     'abu-dhabi',
@@ -47,12 +45,12 @@ interface Props {
 
 const GOOGLE_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? '';
 
-/* Emirlik eşleme */
-function extractRegion(place: google.maps.places.PlaceResult): CustomerFormData['region'] | null {
-  const comp = place.address_components ?? [];
-  const emirate = comp.find((c) =>
+function extractRegion(
+  place: google.maps.places.PlaceResult
+): CustomerFormData['region'] | null {
+  const emirate = place.address_components?.find((c) =>
     c.types.includes('administrative_area_level_1')
-  )?.long_name?.toLowerCase();
+  )?.long_name.toLowerCase();
 
   switch (emirate) {
     case 'dubai':
@@ -79,7 +77,6 @@ const CustomerForm = forwardRef<CustomerFormHandle, Props>(
     const {
       register,
       setValue,
-      getValues,
       formState: { isValid },
       watch,
     } = useForm<CustomerFormData>({
@@ -94,54 +91,50 @@ const CustomerForm = forwardRef<CustomerFormHandle, Props>(
       },
     });
 
-    /* Expose to parent */
+    /* Parent’a isValid() API’si */
     useImperativeHandle(ref, () => ({ isValid: () => isValid }), [isValid]);
 
-    /* -------- Google Places yükle 1 kez -------- */
-    const inputRef = useRef<HTMLInputElement | null>(null);
+    /* Google Places yükle → sadece BAE otelleri */
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
       if (!inputRef.current || !GOOGLE_KEY) return;
 
-      // Script zaten ekliyse tekrar ekleme
-      if (!window.google) {
-        const s = document.createElement('script');
-        s.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=places`;
-        s.async = true;
-        document.body.appendChild(s);
-        s.onload = initAutocomplete;
-      } else {
-        initAutocomplete();
-      }
-
-      function initAutocomplete() {
-        if (!window.google || !inputRef.current) return;
+      function init() {
         const ac = new window.google.maps.places.Autocomplete(inputRef.current!, {
           componentRestrictions: { country: 'ae' },
           types: ['lodging'],
         });
-
         ac.addListener('place_changed', () => {
           const place = ac.getPlace();
           const reg = extractRegion(place);
-          if (reg) {
-            setValue('hotel', place.name ?? '');
+          if (place.name && reg) {
+            setValue('hotel', place.name);
             setValue('region', reg, { shouldValidate: true, shouldDirty: true });
           }
         });
       }
+
+      if (!window.google) {
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=places`;
+        s.async = true;
+        s.onload = init;
+        document.body.appendChild(s);
+      } else {
+        init();
+      }
     }, [setValue]);
 
-    /* -------- Form değişimi ana sayfaya bildir -------- */
+    /* Form değişimi üst bileşene aktar */
     useEffect(() => {
-      const sub = watch((values) => {
-        const ok = schema.safeParse(values).success;
-        onValidChange?.(ok ? (values as GuestInfo) : null);
-      });
+      const sub = watch((v) =>
+        onValidChange?.(schema.safeParse(v).success ? (v as GuestInfo) : null)
+      );
       return () => sub.unsubscribe();
     }, [watch, onValidChange]);
 
-    /* -------- JSX -------- */
+    /* ───────── UI ───────── */
     return (
       <form className="space-y-4" noValidate autoComplete="off">
         <div>
@@ -160,21 +153,16 @@ const CustomerForm = forwardRef<CustomerFormHandle, Props>(
         </div>
 
         <div>
-          <label className="block mb-1 text-sm font-medium">
-            Otel (yalnızca BAE)
-          </label>
+          <label className="block mb-1 text-sm font-medium">Otel / Adres</label>
           <input
             {...register('hotel')}
             ref={(el) => {
               register('hotel').ref(el);
               inputRef.current = el;
             }}
-            placeholder="Otel adı girin"
+            placeholder="Otel / Adres yazın"
             className="input"
           />
-          <p className="mt-1 text-xs text-gray-500">
-            Sadece BAE’deki oteller listelenir.
-          </p>
         </div>
       </form>
     );
