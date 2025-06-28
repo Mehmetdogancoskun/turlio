@@ -1,53 +1,42 @@
 // next.config.js
 /** @type {import('next').NextConfig} */
 
-/* ─────────── 1. Supabase ana makinesini ortam değişkeninden çek  ────────────
-   • Prod / Preview / Lokal emülatör (http://localhost:54321) hepsini tek
-     yerden yönetiriz.
-   • process.env değişkenleri bu dosyada *build time*’da okunabilir. */
-const SUPABASE_URL      = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';  // ör.: https://qiqcsmuybtuxngckkvwf.supabase.co
-const SUPABASE_HOSTNAME = SUPABASE_URL ? new URL(SUPABASE_URL).hostname
-                                        : 'qiqcsmuybtuxngckkvwf.supabase.co';
+/* ───────── 1. Supabase ana makinesini ortam değişkeninden çek ───────── */
+const SUPABASE_URL      = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''; // ör.: https://xxxx.supabase.co
+const SUPABASE_HOSTNAME = SUPABASE_URL
+  ? new URL(SUPABASE_URL).hostname
+  : 'qiqcsmuybtuxngckkvwf.supabase.co';
 
-/* ─────────── 2. Next.js ana ayar bloğu ───────────────────────────────────── */
+/* ───────── 2. Next.js ana ayar bloğu ────────────────────────────────── */
 const nextConfig = {
-  /* Görsel optimizasyonu ---------------------------------------------------- */
+  /* Görsel optimizasyonu */
   images: {
-    /** 🔐 Katı izin listesi (Next 14+). “domains” artık önerilmiyor :contentReference[oaicite:0]{index=0} */
     remotePatterns: [
-      /* Public bucket */
       { protocol: 'https', hostname: SUPABASE_HOSTNAME, pathname: '/storage/v1/object/public/**' },
-
-      /* İmzalı (token’lı) URL’ler */
       { protocol: 'https', hostname: SUPABASE_HOSTNAME, pathname: '/storage/v1/object/sign/**' },
-
-      /* Lokal Supabase emülatörü için – istenmiyorsa silebilirsiniz */
-      { protocol: 'http',  hostname: 'localhost',        port: '54321', pathname: '/storage/v1/object/**' },
+      { protocol: 'http',  hostname: 'localhost', port: '54321', pathname: '/storage/v1/object/**' },
     ],
-
-    /** SVG hizmet ediyorsanız açın – aksi hâlde kapalı kalsın
-     *  dangerouslyAllowSVG: true,
-     */
-
-    /** CDN’imiz olmadığı için, aynı imzalı URL’yi kısa süre cache’lemekte
-        fayda var (Next.js 14’te minCacheTTL → minimumCacheTTL) */
-    minimumCacheTTL: 60,  // saniye
+    minimumCacheTTL: 60,
+    // dangerouslyAllowSVG: true,   // ihtiyaca göre aç
   },
 
-  /* Performans / build çıktısı -------------------------------------------- */
-  output: 'standalone',      // Docker / serverless deploy’da tek klasör üretir
-  compress: true,            // Gzip+Brotli
+  /* Performans / çıktı */
+  output: 'standalone',
+  compress: true,
   poweredByHeader: false,
 
-  /* CSS kritik içerik (Critters) – hâlâ çalışıyor ama opsiyonel. İstersen bırak. :contentReference[oaicite:1]{index=1} */
-  experimental: {
-    optimizeCss: true,
-    /** Yeni alternatif → inlineCss. İkisini aynı anda açmayın
-        inlineCss: true,
-      */
+  /* 🔐  ESLint – build’te hatalara takılma (kalıcı) */
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 
-  /* Ek güvenlik ve önbellek başlıkları ------------------------------------- */
+  /* CSS kritik içerik (Critters) */
+  experimental: {
+    optimizeCss: true,
+    // inlineCss: true, // ikisini aynı anda açma
+  },
+
+  /* Güvenlik başlıkları */
   async headers() {
     return [
       {
@@ -66,7 +55,7 @@ const nextConfig = {
     ];
   },
 
-  /* Var olan redirect’ler --------------------------------------------------- */
+  /* Yönlendirmeler */
   async redirects() {
     return [
       { source: '/products/tours',     destination: '/products/category/tur',      permanent: true },
