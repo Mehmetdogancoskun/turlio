@@ -35,10 +35,8 @@ const CustomerForm = forwardRef<CustomerFormHandle, Props>(
   const {
     register,
     setValue,
-    trigger,           // formu elle doğrulamak için
-    getValues,
-    watch,
     formState: { isValid },
+    watch,
   } = useForm<CustomerFormData>({
     resolver : zodResolver(schema),
     mode     : 'onChange',
@@ -50,10 +48,10 @@ const CustomerForm = forwardRef<CustomerFormHandle, Props>(
     },
   })
 
-  /* başka bileşenler .isValid() diyebilsin */
+  /* .isValid() API’si */
   useImperativeHandle(ref, () => ({ isValid: () => isValid }), [isValid])
 
-  /* Haricî bölge geldiğinde forma yaz – yalnızca değiştiğinde */
+  /* Haricî bölge ⇒ forma yaz */
   useEffect(() => {
     if (regionExternal) {
       setValue('region', regionExternal, {
@@ -63,16 +61,14 @@ const CustomerForm = forwardRef<CustomerFormHandle, Props>(
     }
   }, [regionExternal, setValue])
 
-  /* Form izleyicisi – tek abonelik, loop’suz */
+  /* Form değerleri değiştiğinde tek doğrulama */
   useEffect(() => {
-    const sub = watch(() => {
-      // RHF’nin dahili “isValid”i anında güncellensin
-      trigger()
-      const ok = schema.safeParse(getValues()).success
-      onValidChange?.(ok ? (getValues() as GuestInfo) : null)
+    const sub = watch((values) => {
+      const ok = schema.safeParse(values).success
+      onValidChange?.(ok ? (values as GuestInfo) : null)
     })
     return () => sub.unsubscribe()
-  }, [watch, trigger, getValues, onValidChange])
+  }, [watch, onValidChange])
 
   /* ─────── JSX ─────── */
   return (
@@ -97,11 +93,12 @@ const CustomerForm = forwardRef<CustomerFormHandle, Props>(
         <input {...register('hotel')} className="input" />
       </div>
 
-      {getValues().region && (
+      {/* Bölge sadece okuma amaçlı */}
+      {regionExternal && (
         <div>
           <label className="block mb-1 text-sm font-medium">Bölge</label>
           <input
-            value={getValues().region}
+            value={regionExternal}
             readOnly
             className="input bg-gray-100 cursor-not-allowed"
           />
